@@ -1,0 +1,77 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "usgovvirginia"
+        },
+        "sqlServerName": {
+            "value": "cmagvadbm007s-sv"
+        },
+        "AADlogin": {
+            "value": "xaviert@mcsinternaltrials.onmicrosoft.com"
+        },
+        "sId": {
+            "value": "202cc4ba-3f71-4caa-b756-1e98723814ed"
+        },
+        "tenantId": {
+            "value": "8a09f2d7-8415-4296-92b2-80bb4666c5fc"
+        },
+        "sqldbName": {
+            "value": "cmagvasqldb007"
+        },
+        "storageEndpoint": {
+            "value": "https://cmagvadevsqlstg007.blob.core.usgovcloudapi.net/"
+        },
+        "strgsubId": {
+            "value": "a5cdc8eb-472c-4b8b-a3a8-70c2ba30f7bb"
+        },
+        "workspaceId": {
+            "value": "/subscriptions/a5cdc8eb-472c-4b8b-a3a8-70c2ba30f7bb/resourcegroups/automate-sql/providers/microsoft.operationalinsights/workspaces/cmagvasqlstrg007"
+        },
+        "eventHubName": {
+            "value": "cmagvatazsplunklogshare-ch"
+        },
+        "eHubRuleId": {
+            "value": "/subscriptions/a5cdc8eb-472c-4b8b-a3a8-70c2ba30f7bb/resourceGroups/automate-sql/providers/Microsoft.EventHub/namespaces/cmagvatazsplunklogshare-ch/authorizationRules/rule1"
+        },
+        "storageContainerPath": {
+            "value": "https://cmagvadevsqlstg007.blob.core.usgovcloudapi.net/sqldbauditlogs"
+        },
+        "sqlPEName": {
+            "value": "cmagvadevsql007-pe"
+        },
+        "sqlDNSZoneName": {
+            "value": "privatelink.database.usgovcloudapi.net"
+        },
+        "peVNETLinkName": {
+            "value": "cmagvadev-vn1992vnetlink"
+        },
+        "sqlPEDnsGroupName": {
+            "value": "cmagvadevsqlpednszonegroup"
+        },
+        "virtualNetworkName": {
+            "value": "cmagvadev-vn"
+        },
+        "subnetName":{
+            "value": "cmavadevvn-sn"
+        },
+        "sqlServerAdminLogin": {
+            "value": "test"
+        },
+        "sqlAdminPswd": {
+            "reference": {
+                "keyVault": {
+                    "id": "/subscriptions/a5cdc8eb-472c-4b8b-a3a8-70c2ba30f7bb/resourceGroups/automate-sql/providers/Microsoft.KeyVault/vaults/cmagvashared-kv"
+                },
+                "secretName": "sqladminpswd"
+            }
+        },
+        "OBFWRuleName": {
+            "value": "cmagvadevsqlstg007.blob.core.usgovcloudapi.net"
+        },
+        "stgContributorName": {
+            "value": "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
+        }
+    }
+}
