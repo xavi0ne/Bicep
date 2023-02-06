@@ -29,7 +29,9 @@ Bicep extension for Visual Studio Code. Visual Studio Code with the Bicep extens
 To Deploy BICEP, you’ll need:
 
 Azure CLI Version 2.20.0 or later. (recommended) – BICEP CLI install is automatic.
-	and/or 
+
+or 
+
 PowerShell 5.6.0 or later. Requires manual install of BICEP CLI PowerShell module
 
 Microsoft reference - https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/install#install-manually
