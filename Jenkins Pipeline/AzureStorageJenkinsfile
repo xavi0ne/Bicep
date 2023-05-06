@@ -8,7 +8,7 @@ pipeline {
     }
 
     environment {
-        PS_FILE = 'CommBlobStg1.ps1'
+        PS_FILE = 'CommissionAzureBlobStorage.ps1'
         TenantId = credentials('AZURE_TENANT_ID')
         SubscriptionId = credentials('AZURE_SUBSCRIPTION_ID')
         MY_CRED = credentials('Azure_Infra_SP')
