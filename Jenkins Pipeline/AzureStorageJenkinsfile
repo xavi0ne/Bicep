@@ -1,0 +1,63 @@
+pipeline {
+    agent  any 
+
+    parameters{
+        string(defaultValue: 'RFC1', description: 'RFC Extract File Name without csv extension', name: 'RFC')
+        string(defaultValue: 'xtorres1@live.com', description: 'Email Address of the recipient list', name: 'RecipientList')
+        string(defaultValue: 'Torres1', description: 'Subscription Name', name: 'Subscription')
+    }
+
+    environment {
+        PS_FILE = 'CommBlobStg1.ps1'
+        TenantId = credentials('AZURE_TENANT_ID')
+        SubscriptionId = credentials('AZURE_SUBSCRIPTION_ID')
+        MY_CRED = credentials('Azure_Infra_SP')
+    }
+    stages {
+        stage('Set Build Name'){
+            steps {
+                script {
+                    currentBuild.displayName = env.name
+                    currentBuild.description = env.description
+                }
+            }
+        }
+        stage('validating checkout') {
+            steps {
+                bat """
+                    @echo off
+                    echo APPLICATION SPECIFIC VARIABLES:
+                    echo *******************************************
+                    echo PS_FILE..........'${env.PS_FILE}'
+                    echo *******************************************
+                    set
+                """
+                script {
+                    if (! fileExists(env.PS_FILE)) {
+                        error("The file does not exist: env.PS_FILE.")
+                    } else
+                    {
+                        echo "${env.PS_FILE} exists"
+                    }
+                }
+            }
+        }
+        stage('DeployBicep') {
+            steps{
+                script {
+                    
+                    bat 'az cloud set --name AzureUSGovernment'
+                    bat "az login --service-principal -u $MY_CRED_CLIENT_ID -p $MY_CRED_CLIENT_SECRET --tenant $MY_CRED_TENANT_ID"
+                    
+                    powershell(". './${env.PS_FILE}' '${env.RFC}'")
+                }
+            }
+        }
+        stage('sendResults') {
+            steps {
+              echo "Email address of RecipientList is: ${env.RecipientList}"
+              emailext attachLog: true, attachmentsPattern: '', body: 'see the results in the attachments', subject: 'Commission Azure SQL with dependencies', to: env.RecipientList
+            }
+        }
+    }
+}
