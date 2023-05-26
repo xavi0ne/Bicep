@@ -1,0 +1,99 @@
+pipeline {
+    agent  any 
+
+    parameters{
+        string(defaultValue: 'RFC1', description: 'RFC Extract File Name without csv extension', name: 'RFC')
+        string(defaultValue: 'xtorres1@live.com', description: 'Email Address of the recipient list', name: 'RecipientList')
+        string(defaultValue: 'Torres1', description: 'Subscription Name', name: 'Subscription')
+        string(defaultValue: '', description: 'Resource Group Name', name: 'ResourceGroup')
+    }
+
+    environment {
+        PS_FILE = 'testvm.ps1'
+        TenantId = credentials('AZURE_TENANT_ID')
+        SubscriptionId = credentials('AZURE_SUBSCRIPTION_ID')
+        MY_CRED = credentials('Azure_Infra_SP')
+        jsonfile = "./AzureVM/${env.RFC}.parameters.json"
+    }
+    stages {
+        stage('Set Build Name'){
+            steps {
+                script {
+                    currentBuild.displayName = env.name
+                    currentBuild.description = env.description
+                }
+            }
+        }
+        stage('validating checkout') {
+            steps {
+                bat """
+                    @echo off
+                    echo APPLICATION SPECIFIC VARIABLES:
+                    echo *******************************************
+                    echo PS_FILE..........'${env.PS_FILE}'
+                    echo *******************************************
+                    set
+                """
+                script {
+                    if (! fileExists(env.PS_FILE)) {
+                        error("The file does not exist: env.PS_FILE.")
+                    } else
+                    {
+                        echo "${env.PS_FILE} exists"
+                    }
+                }
+            }
+        }
+        stage('DeployParametersScript') {
+            steps{
+                script {
+                    
+                    powershell(". './${env.PS_FILE}' '${env.RFC}'")
+                }
+            }
+        }
+        stage('TestBicep') {
+            steps{
+                script {
+                    
+                    // Login to Azure Government
+                    bat 'az cloud set --name AzureUSGovernment'
+                    bat "az login --service-principal -u $MY_CRED_CLIENT_ID -p $MY_CRED_CLIENT_SECRET --tenant $MY_CRED_TENANT_ID"
+                    bat "az account set --name ${env.Subscription}"
+
+                    // Execute Azure CLI 'what-if' command and capture output
+                    def commandOutput = bat(returnStdout: true, script: "az deployment group what-if --resource-group ${env.ResourceGroup}  --template-file ./AzureVM/maindeployVM.bicep --parameters $jsonfile")
+                    echo commandOutput
+
+                    // Prompt the admin to proceed with deployment
+                    def proceed = input(
+                        message: 'Do you want to proceed with deployment?',
+                        parameters: [booleanParam(defaultValue: false, description: 'Proceed to DeployBicep?', name: 'DeployBicep')]
+                    )
+
+                    // Check if the admin chose to proceed with deployment
+                    if (proceed) {
+                        echo 'Proceeding with deployment...'
+                    } else {
+                        error('DeployBicep was not approved. Aborting pipeline.')
+                    }
+                }
+            }
+        }
+        stage('DeployBicep') {
+            steps{
+                script {
+                    
+                    // Execute Deployment of Bicep Template
+                    bat "az deployment group create --resource-group ${env.ResourceGroup} --template-file ./AzureVM/maindeployVM.bicep --parameters $jsonfile"
+                }
+            }
+        }
+        stage('SendResults') {
+            steps {
+              echo "Email address of RecipientList is: ${env.RecipientList}"
+              emailext attachLog: true, attachmentsPattern: '', body: 'see the results in the attachments', subject: 'Deploy Bicep', to: env.RecipientList
+            }
+        }
+    }
+}
