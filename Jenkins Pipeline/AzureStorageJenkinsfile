@@ -5,13 +5,15 @@ pipeline {
         string(defaultValue: 'RFC1', description: 'RFC Extract File Name without csv extension', name: 'RFC')
         string(defaultValue: 'xtorres1@live.com', description: 'Email Address of the recipient list', name: 'RecipientList')
         string(defaultValue: 'Torres1', description: 'Subscription Name', name: 'Subscription')
+        string(defaultValue: '', description: 'Resource Group Name', name: 'ResourceGroup')
     }
 
     environment {
-        PS_FILE = 'CommissionAzureBlobStorage.ps1'
+        PS_FILE = 'CommBlobStg1.ps1'
         TenantId = credentials('AZURE_TENANT_ID')
         SubscriptionId = credentials('AZURE_SUBSCRIPTION_ID')
         MY_CRED = credentials('Azure_Infra_SP')
+        jsonfile = "./AzureStorage/Blob/${env.RFC}.parameters.json"
     }
     stages {
         stage('Set Build Name'){
@@ -42,21 +44,54 @@ pipeline {
                 }
             }
         }
-        stage('DeployBicep') {
+        stage('DeployParametersScript') {
             steps{
                 script {
-                    
-                    bat 'az cloud set --name AzureUSGovernment'
-                    bat "az login --service-principal -u $MY_CRED_CLIENT_ID -p $MY_CRED_CLIENT_SECRET --tenant $MY_CRED_TENANT_ID"
                     
                     powershell(". './${env.PS_FILE}' '${env.RFC}'")
                 }
             }
         }
-        stage('sendResults') {
+        stage('TestBicep') {
+            steps{
+                script {
+                    
+                    // Login to Azure Government
+                    bat 'az cloud set --name AzureUSGovernment'
+                    bat "az login --service-principal -u $MY_CRED_CLIENT_ID -p $MY_CRED_CLIENT_SECRET --tenant $MY_CRED_TENANT_ID"
+
+                    // Execute Azure CLI 'what-if' command and capture output
+                    def commandOutput = bat(returnStdout: true, script: "az deployment group what-if --resource-group ${env.ResourceGroup}  --template-file ./AzureStorage/Blob/maindeployStorage.bicep  --parameters $jsonfile")
+                    echo commandOutput
+
+                    // Prompt the admin to proceed with deployment
+                    def proceed = input(
+                        message: 'Do you want to proceed with deployment?',
+                        parameters: [booleanParam(defaultValue: false, description: 'Proceed to DeployBicep?', name: 'DeployBicep')]
+                    )
+
+                    // Check if the admin chose to proceed with deployment
+                    if (proceed) {
+                        echo 'Proceeding with deployment...'
+                    } else {
+                        error('DeployBicep was not approved. Aborting pipeline.')
+                    }
+                }
+            }
+        }
+        stage('DeployBicep') {
+            steps{
+                script {
+                    
+                    // Execute Deployment of Bicep Template
+                    bat "az deployment group create --resource-group ${env.ResourceGroup} --template-file ./AzureStorage/Blob/maindeployStorage.bicep  --parameters $jsonfile"
+                }
+            }
+        }
+        stage('SendResults') {
             steps {
               echo "Email address of RecipientList is: ${env.RecipientList}"
-              emailext attachLog: true, attachmentsPattern: '', body: 'see the results in the attachments', subject: 'Commission Azure SQL with dependencies', to: env.RecipientList
+              emailext attachLog: true, attachmentsPattern: '', body: 'see the results in the attachments', subject: 'Deploy Bicep', to: env.RecipientList
             }
         }
     }
