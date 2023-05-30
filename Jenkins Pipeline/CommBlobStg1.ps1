@@ -22,14 +22,14 @@ $stgarray = @()
 
 #loop through each row
 foreach ($row in $values) {
-    $storageDetails = [ordered]@{"storageName"=$row.names;"ipAddress"=$row.ips}
+    $storageDetails = [ordered]@{"storageName"=$row.name;"ipAddress"=$row.ips}
     $stgarray += $storageDetails
 }
 # Generate the JSON parameters file template using az cli
-az bicep generate-params --file './AzureStorage/blobstorage1.bicep' 
+az bicep generate-params --file './AzureStorage/Blob/maindeployStorage.bicep' 
 
 # Load ARM JSON parameters file template
-$template = Get-Content -Path './AzureStorage/blobstorage1.parameters.json' -Raw | ConvertFrom-Json
+$template = Get-Content -Path './AzureStorage/Blob/maindeployStorage.parameters.json' -Raw | ConvertFrom-Json
 
 # Replace placeholders in template with values from .csv file
 $storageProperties = $stgarray
@@ -59,8 +59,7 @@ $financialTag = $values.financialTag
     }
 
 # Write the updated template to a file
-$jsonfile = './AzureStorage/' + $RFC + 'parameters.json'
+$jsonfile = './AzureStorage/Blob/' + $RFC + '.parameters.json'
 $template | ConvertTo-Json -Depth 10 -compress | Set-Content -Path $jsonfile
 
 az account set --name $values.subscriptionId
-az deployment group create --resource-group $values.resourceGroup --template-file ./AzureStorage/blobstorage1.bicep --parameters $jsonfile
