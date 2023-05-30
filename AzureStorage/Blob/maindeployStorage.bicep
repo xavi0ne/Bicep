@@ -5,6 +5,7 @@ param location string
 param vnetResourceGroup string 
 param vnet string
 param subnet string
+param deployResourceGroup string
 
 //variables of existing resources in Azure subscription 
 var subnetId = '/subscriptions/<subscriptionName>/resourceGroups/${vnetResourceGroup}/providers/Microsoft.Network/virtualNetworks/${vnet}/subnets/${subnet}'
@@ -20,7 +21,7 @@ var pvtDnsZoneId = '/subscriptions/<subscriptionName>/resourceGroups/<resourceGr
 
 module deployStorageAccount 'module-storageAccount.bicep' = [ for (storage, i) in storageDetails: {
   name: 'deployBlobStorage${i}'
-  scope: resourceGroup('automate-rg')
+  scope: resourceGroup(deployResourceGroup)
   params: {
     financialTag: financialTag
     location: location
@@ -30,7 +31,7 @@ module deployStorageAccount 'module-storageAccount.bicep' = [ for (storage, i) i
 
 module deployPrivateEndpoints 'module-storagePrivateEndpoint.bicep' = [ for (storage, i) in storageDetails: {
   name: 'deployStoragePE${i}'
-  scope: resourceGroup('automate-rg')
+  scope: resourceGroup(deployResourceGroup)
   params: {
     financialTag: financialTag
     location: location
@@ -46,7 +47,7 @@ module deployPrivateEndpoints 'module-storagePrivateEndpoint.bicep' = [ for (sto
 
 module deployDiagnostics 'module-storageDiagnostics.bicep' = [ for (storage, i) in storageDetails: {
   name: 'deployStorageDiag${i}'
-  scope: resourceGroup('automate-rg')
+  scope: resourceGroup(deployResourceGroup)
   params: {
     eventHub: eventHub
     eventHubID: eventHubID
