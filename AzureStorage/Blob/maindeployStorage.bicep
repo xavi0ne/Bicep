@@ -1,15 +1,10 @@
 @description('name is 3 to 24 characters only; to be unique and only contain lowercase letters and numbers')
-param storageDetails array = [
-  {
-    storageName: '<storage account name>'
-    ipAddress: '<private IP>'
-  }
-]
-param financialTag string = 'mo-acr-dollars'
-param location string  = '<us gov region location Name>'
-param vnetResourceGroup string = '<vnetRGName>'
-param vnet string = '<vnetName>'
-param subnet string = '<subnetName>'
+param storageDetails array 
+param financialTag string
+param location string  
+param vnetResourceGroup string 
+param vnet string
+param subnet string
 
 //variables of existing resources in Azure subscription 
 var subnetId = '/subscriptions/<subscriptionName>/resourceGroups/${vnetResourceGroup}/providers/Microsoft.Network/virtualNetworks/${vnet}/subnets/${subnet}'
