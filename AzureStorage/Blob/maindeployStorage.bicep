@@ -1,27 +1,27 @@
-@description('name is 3 to 18 characters only; to be unique and only contain lowercase letters and numbers')
+@description('name is 3 to 24 characters only; to be unique and only contain lowercase letters and numbers')
 param storageDetails array = [
   {
-    storageName: 'buduskatest1'
-    ipAddress: '10.11.0.5'
+    storageName: '<storage account name>'
+    ipAddress: '<private IP>'
   }
 ]
 param financialTag string = 'mo-acr-dollars'
-param location string  = 'usgovvirginia'
-param vnetResourceGroup string = 'automate-rg'
-param vnet string = 'cmagvadev-vn'
-param subnet string = 'cmagvadevvn-sn'
+param location string  = '<us gov region location Name>'
+param vnetResourceGroup string = '<vnetRGName>'
+param vnet string = '<vnetName>'
+param subnet string = '<subnetName>'
 
 //variables of existing resources in Azure subscription 
-var subnetId = '/subscriptions/a5cdc8eb-472c-4b8b-a3a8-70c2ba30f7bb/resourceGroups/${vnetResourceGroup}/providers/Microsoft.Network/virtualNetworks/${vnet}/subnets/${subnet}'
+var subnetId = '/subscriptions/<subscriptionName>/resourceGroups/${vnetResourceGroup}/providers/Microsoft.Network/virtualNetworks/${vnet}/subnets/${subnet}'
 
-@description('Resource ID of LAW')
-var logAnalyitcsID = '/subscriptions/a5cdc8eb-472c-4b8b-a3a8-70c2ba30f7bb/resourcegroups/automate-rg/providers/microsoft.operationalinsights/workspaces/cmagvasqlstrg007'
+@description('Resource ID of existing LAW')
+var logAnalyitcsID = '/subscriptions/<subscriptionName>/resourcegroups/<resourceGroupName>/providers/microsoft.operationalinsights/workspaces/<logAnalyticsName>'
 
-@description('Resource ID of Splunk Event Hub')
-var eventHubID = '/subscriptions/a5cdc8eb-472c-4b8b-a3a8-70c2ba30f7bb/resourceGroups/automate-rg/providers/Microsoft.EventHub/namespaces/cmagvatazsplunklogshare-ch/authorizationRules/RootManageSharedAccessKey'
-var eventHub = 'cmagvatazsplunklogshare-ch'
-
-var pvtDnsZoneId = '/subscriptions/a5cdc8eb-472c-4b8b-a3a8-70c2ba30f7bb/resourceGroups/networking-rg/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.usgovcloudapi.net'
+@description('Resource ID of existing Event Hub')
+var eventHubID = '/subscriptions/<subscriptionName>/resourceGroups/<resourceGroupName>/providers/Microsoft.EventHub/namespaces/<eventHubName>/authorizationRules/RootManageSharedAccessKey'
+var eventHub = '<eventHubName>'
+@description('Resource ID of existing Private DNS Zone for Blob Storage in Azure Government')
+var pvtDnsZoneId = '/subscriptions/<subscriptionName>/resourceGroups/<resourceGroupName>/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.usgovcloudapi.net'
 
 module deployStorageAccount 'module-storageAccount.bicep' = [ for (storage, i) in storageDetails: {
   name: 'deployBlobStorage${i}'
