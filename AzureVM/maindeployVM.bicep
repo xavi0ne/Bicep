@@ -8,22 +8,25 @@ param vnetResourceGroup string
 param vnet string 
 param subnet string 
 param kvName string 
-
+param kvResourceGroup string
 param financialTag string 
 
-var availabilitySetId = '/subscriptions/94f0d762-4d1d-4342-b494-dd09fa1219ef/resourceGroups/cmagvadtecompute-rg/providers/Microsoft.Compute/availabilitySets/dte-as'
-var imageReferenceId = '/subscriptions/94f0d762-4d1d-4342-b494-dd09fa1219ef/resourceGroups/${imageResourceGroup}/providers/Microsoft.Compute/galleries/tazImages/images/taz1/versions/${imageVersion}'
+// Resource ID's of existing resources that will be used in the deployment
+var availabilitySetId = '/subscriptions/<subscriptionName>/resourceGroups/<resourceGroupName>/providers/Microsoft.Compute/<availabilitySetName>'
+var imageReferenceId = '/subscriptions/<subscriptionName>/resourceGroups/${imageResourceGroup}/providers/Microsoft.Compute/galleries/<ComputeGalleryName>/images/<imageDefinitionName>/versions/${imageVersion}'
 
-var kekUrl = 'https://cmagvadteadminade-kv10.vault.usgovcloudapi.net/keys/DTE-KEK01/221ae866aed642d0b8c44ae2d48c2d6c'
-var keyvaultURL = 'https://cmagvadteadminade-kv10.vault.usgovcloudapi.net/'
+//Existing key vault URL and KEK URL
+var kekUrl = '<yourkekUrl>'
+var keyvaultURL = '<kvUrl>'
 
-var userAssignedManagedId = '202cc4ba-3f71-4caa-b756-1e98723814ed' 
+//existing managedID to be used for Azure Monitoring Extension resource
+var userAssignedManagedId = '<yourUserAssignedManagedID>' 
 
 
 //Required to pass the KeyVault Secret into Azure VM Module and for Azure Disk Encryption Extension 
 resource kv 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
   name: kvName
-  scope: az.resourceGroup('cmagvadteadminmgmt-rg')
+  scope: az.resourceGroup(kvResourceGroup)
 }
 
 module Nic 'module-NicVM.bicep' = [ for (vm, i) in vms: {
@@ -42,7 +45,7 @@ module Nic 'module-NicVM.bicep' = [ for (vm, i) in vms: {
 
 module azureVM 'module-vm.bicep' = [ for (vm, i) in vms: {
   name: 'azureVM${i}'
-  scope: az.resourceGroup('cmagvadtecompute-rg')
+  scope: az.resourceGroup(resourceGroup)
   params: {
     DeploymentAdminAcct: kv.getSecret('deploymentadminacct') 
     DeploymentAdminPwd:  kv.getSecret('deploymentAdminPwd')
@@ -60,7 +63,7 @@ module azureVM 'module-vm.bicep' = [ for (vm, i) in vms: {
 //Deploy Azure Disk Encryption VM Extension
 module ade 'module-azureDiskEncryption.bicep' = [ for (vm, i) in vms: {
   name: 'adeExtension${i}'
-  scope: az.resourceGroup('cmagvadtecompute-rg')
+  scope: az.resourceGroup(resourceGroup)
   params: {
     financialTag: financialTag 
     KeyEncryptionKeyURL: kekUrl
@@ -78,7 +81,7 @@ module ade 'module-azureDiskEncryption.bicep' = [ for (vm, i) in vms: {
 //Deploy Network Watcher VM Extension 
 module netwatcher 'module-networkWatcherExt.bicep' = [ for (vm, i) in vms: {
   name: 'netwatcher${i}'
-  scope: az.resourceGroup('cmagvadtecompute-rg')
+  scope: az.resourceGroup(resourceGroup)
   params: {
     financialTag: financialTag
     location: location 
@@ -92,7 +95,7 @@ module netwatcher 'module-networkWatcherExt.bicep' = [ for (vm, i) in vms: {
 //Deploy JsonADDomain VM Extension
 module jsonADDomain 'module-jsonADDomain.bicep' = [ for (vm, i) in vms: {
   name: 'jsonADDomain${i}'
-  scope: az.resourceGroup('cmagvadtecompute-rg')
+  scope: az.resourceGroup(resourceGroup)
   params: {
     location: location
     ProdNetworkGovDomainJoinAcct: kv.getSecret('ProdNetworkGovDomainJoinAcct1')
@@ -108,7 +111,7 @@ module jsonADDomain 'module-jsonADDomain.bicep' = [ for (vm, i) in vms: {
 //Deploy VMAccessAgent
 module VMAccessAgent 'module-vmAccessAgent.bicep' = [ for (vm, i) in vms: {
   name: 'VMAccessAgent${i}'
-  scope: az.resourceGroup('cmagvadtecompute-rg')
+  scope: az.resourceGroup(resourceGroup)
   params: {
     DeploymentAdminAcct: kv.getSecret('deploymentadminacct')
     DeploymentAdminPwd: kv.getSecret('deploymentAdminPwd')
@@ -124,7 +127,7 @@ module VMAccessAgent 'module-vmAccessAgent.bicep' = [ for (vm, i) in vms: {
 //Deploy VM Monitoring Agent 
 module AzureMonitorWindowsAgent 'module-AzureMonitorWindowsAgent.bicep' = [ for (vm, i) in vms: {
   name: 'AzureMonitorWindowsAgent${i}'
-  scope: az.resourceGroup('cmagvadtecompute-rg')
+  scope: az.resourceGroup(resourceGroup)
   params: {
     location: location
     financialTag: financialTag
@@ -139,7 +142,7 @@ module AzureMonitorWindowsAgent 'module-AzureMonitorWindowsAgent.bicep' = [ for 
 //Deploy VM BGInfo Extension 
 module BGInfoExtension 'module-bginfo.bicep' = [ for (vm, i) in vms: {
   name: 'BGInfo${i}'
-  scope: az.resourceGroup('cmagvadtecompute-rg')
+  scope: az.resourceGroup(resourceGroup)
   params: {
     location: location
     financialTag: financialTag
